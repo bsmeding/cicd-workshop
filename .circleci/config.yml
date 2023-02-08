@@ -1,7 +1,12 @@
 version: 2.1
 
+# orbs:
+#   node: circleci/node@5.1.0
+
+# orbs 
 orbs:
-  node: circleci/node@5.1.0
+  node: circleci/node@5.0.2
+  docker: circleci/docker@2.1.1
 
 jobs:
   build:
@@ -56,7 +61,7 @@ jobs:
   #           command: |
   #             npm run test-ci
 
-  # Now with cache in Orbs
+  # # Now with cache in Orbs
   build_and_test:
     docker:
       - image: cimg/node:16.16.0
@@ -66,7 +71,24 @@ jobs:
       - run:
           name: Run tests
           command: npm run test-ci  
+
+  # now with docker build
+  build_docker_image:
+      docker:
+        - image: cimg/base:stable
+      steps:
+        - checkout
+        - setup_remote_docker:
+            docker_layer_caching: false
+        - docker/check
+        - docker/build:
+            image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+            tag: 0.1.<< pipeline.number >>
+        - docker/push:
+            image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+            tag: 0.1.<< pipeline.number >>  
 workflows:
   build_test_deploy:
     jobs:
       - build_and_test
+      - build_docker_image
