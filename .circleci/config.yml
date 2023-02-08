@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@5.1.0
+
 jobs:
   build:
     docker:
@@ -30,27 +33,39 @@ jobs:
   #           path: test-results
   #       - store_artifacts:
   #           path: test-results
+
   # build with cache of downloads:
+  # build_and_test:
+  #     docker:
+  #       - image: cimg/node:16.16.0
+  #     steps:
+  #       - checkout
+  #       - restore_cache:
+  #           keys:
+  #             - v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
+  #             - v1-npm-deps-{{ arch }}-
+  #             - v1-npm-deps-
+  #       - run:
+  #           command: |
+  #             npm install
+  #       - save_cache:
+  #           paths:
+  #             - node_modules
+  #           key: v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
+  #       - run:
+  #           command: |
+  #             npm run test-ci
+
+  # Now with cache in Orbs
   build_and_test:
-      docker:
-        - image: cimg/node:16.16.0
-      steps:
-        - checkout
-        - restore_cache:
-            keys:
-              - v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
-              - v1-npm-deps-{{ arch }}-
-              - v1-npm-deps-
-        - run:
-            command: |
-              npm install
-        - save_cache:
-            paths:
-              - node_modules
-            key: v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
-        - run:
-            command: |
-              npm run test-ci
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          name: Run tests
+          command: npm run test-ci  
 workflows:
   build_test_deploy:
     jobs:
